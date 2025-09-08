@@ -1,5 +1,5 @@
 from typing import List, Tuple, Dict, Optional
-from queue import Queue  
+from collections import deque  
 from search_problem import SearchProblem, State
 from maze import Maze
 
@@ -25,8 +25,39 @@ def bfs(problem: SearchProblem[State]) -> Tuple[Optional[List[State]], Dict[str,
     """
     # TODO: Update these values
     stats = {"path_length": 0, "states_expanded": 0, "max_frontier_size": 0} 
+
+    q = deque()
+    seen = set()
+    start = problem.get_start_state()
+
+    if not start:
+        return (None, stats)
+
+    q.append(start)
+    seen.add(start)
+    stats["states_expanded"] += 1
+    stats["max_frontier_size"] += 1
+    predecessor_dict = {}
+    
+    while q:
+        state = q.popleft()
+        if problem.is_goal_state(state):
+            path = reconstruct_path(predecessor_dict, state, problem)
+            stats["path_length"] = len(path)
+            return (path, stats)
+        for neighbor in problem.get_successors(state):
+            if neighbor not in seen:
+                q.append(neighbor)
+                seen.add(neighbor)
+                stats["states_expanded"] += 1
+                stats["max_frontier_size"] = max(stats["max_frontier_size"], len(q))
+                predecessor_dict[neighbor] = state
+    
+    return (None, stats)
+    
+
+
     raise PathNotFoundError
-    pass
 
 def dfs(problem: SearchProblem[State]) -> Tuple[Optional[List[State]], Dict[str, int]]:
     """
@@ -45,8 +76,37 @@ def dfs(problem: SearchProblem[State]) -> Tuple[Optional[List[State]], Dict[str,
     """
     # TODO: Update these values
     stats = {"path_length": 0, "states_expanded": 0, "max_frontier_size": 0}
+
+    q = deque()
+    seen = set()
+    start = problem.get_start_state()
+
+    if not start:
+        return (None, stats)
+
+    q.append(start)
+    seen.add(start)
+    stats["states_expanded"] += 1
+    stats["max_frontier_size"] += 1
+    predecessor_dict = {}
+    
+    while q:
+        state = q.pop()
+        if problem.is_goal_state(state):
+            path = reconstruct_path(predecessor_dict, state, problem)
+            stats["path_length"] = len(path)
+            return (path, stats)
+        for neighbor in problem.get_successors(state):
+            if neighbor not in seen:
+                q.append(neighbor)
+                seen.add(neighbor)
+                stats["states_expanded"] += 1
+                stats["max_frontier_size"] = max(stats["max_frontier_size"], len(q))
+                predecessor_dict[neighbor] = state
+    
+    return (None, stats)
+
     raise PathNotFoundError
-    pass
 
 def reconstruct_path(path: Dict[State, State], end: State, problem: SearchProblem[State]) -> List[State]:
     """
