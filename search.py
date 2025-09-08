@@ -30,17 +30,17 @@ def bfs(problem: SearchProblem[State]) -> Tuple[Optional[List[State]], Dict[str,
     seen = set()
     start = problem.get_start_state()
 
-    if not start:
+    if start is None:
         return (None, stats)
 
     q.append(start)
     seen.add(start)
-    stats["states_expanded"] += 1
     stats["max_frontier_size"] += 1
     predecessor_dict = {}
     
     while q:
         state = q.popleft()
+        stats["states_expanded"] += 1
         if problem.is_goal_state(state):
             path = reconstruct_path(predecessor_dict, state, problem)
             stats["path_length"] = len(path)
@@ -49,7 +49,6 @@ def bfs(problem: SearchProblem[State]) -> Tuple[Optional[List[State]], Dict[str,
             if neighbor not in seen:
                 q.append(neighbor)
                 seen.add(neighbor)
-                stats["states_expanded"] += 1
                 stats["max_frontier_size"] = max(stats["max_frontier_size"], len(q))
                 predecessor_dict[neighbor] = state
     
@@ -81,17 +80,17 @@ def dfs(problem: SearchProblem[State]) -> Tuple[Optional[List[State]], Dict[str,
     seen = set()
     start = problem.get_start_state()
 
-    if not start:
+    if start is None:
         return (None, stats)
 
     q.append(start)
     seen.add(start)
-    stats["states_expanded"] += 1
-    stats["max_frontier_size"] += 1
+    stats["max_frontier_size"] = 1
     predecessor_dict = {}
     
     while q:
         state = q.pop()
+        stats["states_expanded"] += 1
         if problem.is_goal_state(state):
             path = reconstruct_path(predecessor_dict, state, problem)
             stats["path_length"] = len(path)
@@ -100,7 +99,6 @@ def dfs(problem: SearchProblem[State]) -> Tuple[Optional[List[State]], Dict[str,
             if neighbor not in seen:
                 q.append(neighbor)
                 seen.add(neighbor)
-                stats["states_expanded"] += 1
                 stats["max_frontier_size"] = max(stats["max_frontier_size"], len(q))
                 predecessor_dict[neighbor] = state
     
