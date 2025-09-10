@@ -80,10 +80,20 @@ class IOTest(unittest.TestCase):
         random.seed(0)
         two_by_two_maze = Maze(2, 2)
         self._check_maze(bfs, two_by_two_maze, 3)
+        path, stats = bfs(two_by_two_maze)
+        self._assert_valid_path(two_by_two_maze, path)
+        # path should be exactly 3
+        self.assertEqual(len(path), 3)
+        self._validate_stats(stats, path, 2, 2)
 
         random.seed(0)
         large_maze = Maze(10, 10)
         self._check_maze(bfs, large_maze)
+        path, stats = bfs(large_maze)
+        self._assert_valid_path(large_maze, path)
+        # path should be at least 19
+        self.assertGreaterEqual(len(path), 19)
+        self._validate_stats(stats, path, 10, 10)
         
     def test_dfs(self) -> None:
         random.seed(0)
