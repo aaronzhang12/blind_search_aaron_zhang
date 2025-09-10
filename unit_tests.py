@@ -130,5 +130,45 @@ class IOTest(unittest.TestCase):
         self.assertEqual(len(bpath), 3)
         self.assertEqual(bstats["path_length"], 3)
 
+    def test_unreachable_returns_none(self):
+        # 2x2 board with all walls intact; start != goal; self_generating=False
+        board = [[MazeRoom() for _ in range(2)] for _ in range(2)]
+        m = Maze(width=2, height=2, start=(0,0), goal=(1,1),
+                self_generating=False, board=board)
+
+        bpath, bstats = bfs(m)
+        dpath, dstats = dfs(m)
+
+        self.assertIsNone(bpath, "BFS should return None when goal is unreachable")
+        self.assertIsNone(dpath, "DFS should return None when goal is unreachable")
+
+        # Reasonable stats: expanded at least the start, frontier tracked
+        self.assertGreaterEqual(bstats["states_expanded"], 1)
+        self.assertGreaterEqual(dstats["states_expanded"], 1)
+        self.assertGreaterEqual(bstats["max_frontier_size"], 1)
+        self.assertGreaterEqual(dstats["max_frontier_size"], 1)
+
+    def test_path_states_use_same_board(self):
+        import random
+        random.seed(0)
+        m = Maze(3, 3)  # random but fine; we only check identity
+        path, stats = bfs(m)
+        self.assertIsNotNone(path)
+        for s in path:
+            self.assertIs(s.board, m.board, "Path state uses a different board object")
+
+    def test_bfs_not_longer_than_dfs(self):
+        random.seed(0)
+        m = Maze(10, 10)
+        bpath, _ = bfs(m)
+        dpath, _ = dfs(m)
+        self.assertIsNotNone(bpath)
+        self.assertIsNotNone(dpath)
+        self.assertLessEqual(len(bpath), len(dpath),
+                            "BFS path (nodes) should be <= DFS path")
+
+
+
+
 if __name__ == "__main__":
     unittest.main()
