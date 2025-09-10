@@ -44,7 +44,7 @@ class IOTest(unittest.TestCase):
         for u, v in zip(path, path[1:]):
             self.assertIn(v, maze.get_successors(u), f"Step {u}->{v} is not a legal move")
 
-        # 3) BFS normally returns a simple path (no revisits)
+        # 3) Returns a simple path (no revisits)
         self.assertEqual(len(path), len(set(path)), "Path revisits a state")
 
     def _validate_stats(self, stats: dict, path: List[Any], width: int, height: int):
@@ -75,26 +75,29 @@ class IOTest(unittest.TestCase):
         self.assertEqual(stats["path_length"], 0)
         self._validate_stats(stats, path, 1, 1)
 
-
-
         two_by_two_maze = Maze(2, 2)
         self._check_maze(bfs, two_by_two_maze, 3)
 
         large_maze = Maze(10, 10)
         self._check_maze(bfs, large_maze)
         
-
-
     def test_dfs(self) -> None:
         single_cell_maze = Maze(1, 1)
         self._check_maze(dfs, single_cell_maze, 1)
+
+        # same tests as bfs
+        self.assertEqual(single_cell_maze.start_state, single_cell_maze.goal_state)
+        path, stats = dfs(single_cell_maze)
+        self._assert_valid_path(single_cell_maze, path)
+        self.assertEqual(len(path), 1)
+        self.assertEqual(stats["path_length"], 0)
+        self._validate_stats(stats, path, 1, 1)
 
         two_by_two_maze = Maze(2, 2)
         self._check_maze(dfs, two_by_two_maze, 3)
 
         large_maze = Maze(10, 10)
         self._check_maze(dfs, large_maze)
-        # TODO: add tests here!
 
     def test_no_empty_path_when_reachable(self):
         # Build a 1x3 corridor: (0,0) -> (0,1) -> (0,2)
@@ -112,7 +115,7 @@ class IOTest(unittest.TestCase):
         bpath, bstats = bfs(m)
         dpath, dstats = dfs(m)
 
-        # Do NOT guard with "or []": this should be non-empty by correctness
+        # Checking that an actual path is outputed with positive length
         self.assertIsNotNone(bpath, "BFS returned None on a reachable maze")
         self.assertIsNotNone(dpath, "DFS returned None on a reachable maze")
         self.assertGreater(len(bpath), 0, "BFS returned an empty path on a reachable maze")
