@@ -36,7 +36,7 @@ class MazeGenerator(SearchProblem[MazeState]):
         self.width = width
         self.height = height
         
-        self.board = 
+        self.board = None
 
         start_x, start_y = random.randint(0, self.width-1), random.randint(0, self.height-1)
         
