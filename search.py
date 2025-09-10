@@ -43,7 +43,7 @@ def bfs(problem: SearchProblem[State]) -> Tuple[Optional[List[State]], Dict[str,
         stats["states_expanded"] += 1
         if problem.is_goal_state(state):
             path = reconstruct_path(predecessor_dict, state, problem)
-            stats["path_length"] = len(path)
+            stats["path_length"] = max(0, len(path)-1)
             return (path, stats)
         for neighbor in problem.get_successors(state):
             if neighbor not in seen:
@@ -93,7 +93,7 @@ def dfs(problem: SearchProblem[State]) -> Tuple[Optional[List[State]], Dict[str,
         stats["states_expanded"] += 1
         if problem.is_goal_state(state):
             path = reconstruct_path(predecessor_dict, state, problem)
-            stats["path_length"] = len(path)
+            stats["path_length"] = max(0, len(path)-1)
             return (path, stats)
         for neighbor in problem.get_successors(state):
             if neighbor not in seen:

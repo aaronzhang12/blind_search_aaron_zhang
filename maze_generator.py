@@ -36,13 +36,11 @@ class MazeGenerator(SearchProblem[MazeState]):
         self.width = width
         self.height = height
         
-        # TODO: Initialize the maze grid with walls everywhere
-        self.board = None
+        self.board = 
 
-        # TODO: Start at a random location within the maze
-        start_x, start_y = None, None
+        start_x, start_y = random.randint(0, self.width-1), random.randint(0, self.height-1)
         
-        #TODO: Start the starting cell of the board as visited to be True
+        self.board[start_x][start_y] = True
 
         # TODO: Set the initial start state and initialize the counters for the maze generation process
         self.start_state = None 

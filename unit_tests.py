@@ -2,6 +2,7 @@ import unittest
 from typing import Optional, Callable, Any, Tuple, List
 from maze import Maze, MazeRoom
 from search import bfs, dfs
+import random
 
 class IOTest(unittest.TestCase):
     """
@@ -65,6 +66,7 @@ class IOTest(unittest.TestCase):
 
 
     def test_bfs(self) -> None:
+        random.seed(0)
         single_cell_maze = Maze(1, 1)
         self._check_maze(bfs, single_cell_maze, 1)
         # check that the start and goal are equal
@@ -75,19 +77,24 @@ class IOTest(unittest.TestCase):
         self.assertEqual(stats["path_length"], 0)
         self._validate_stats(stats, path, 1, 1)
 
+        random.seed(0)
         two_by_two_maze = Maze(2, 2)
         self._check_maze(bfs, two_by_two_maze, 3)
 
+        random.seed(0)
         large_maze = Maze(10, 10)
         self._check_maze(bfs, large_maze)
         
     def test_dfs(self) -> None:
+        random.seed(0)
         single_cell_maze = Maze(1, 1)
         self._check_maze(dfs, single_cell_maze, 1)
 
+        random.seed(0)
         two_by_two_maze = Maze(2, 2)
         self._check_maze(dfs, two_by_two_maze, 3)
 
+        random.seed(0)
         large_maze = Maze(10, 10)
         self._check_maze(dfs, large_maze)
 
