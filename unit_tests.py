@@ -3,7 +3,6 @@ from typing import Optional, Callable, Any, Tuple, List
 from maze import Maze
 from search import bfs, dfs
 
-
 class IOTest(unittest.TestCase):
     """
     Tests IO for bfs and dfs implementations. Contains basic/trivial test cases.
@@ -39,17 +38,52 @@ class IOTest(unittest.TestCase):
             if length:
                 self.assertEqual(len(path), length,
                                  f"Path length should be {length}")
+                
+    def _assert_valid_path(self, maze: Maze, path: List[Any]) -> None:
+        # 2) make sure that all next states ae neighbors of current states
+        for u, v in zip(path, path[1:]):
+            self.assertIn(v, maze.get_successors(u), f"Step {u}->{v} is not a legal move")
+
+        # 3) BFS normally returns a simple path (no revisits)
+        self.assertEqual(len(path), len(set(path)), "Path revisits a state")
+
+    def _validate_stats(self, stats: dict, path: List[Any], width: int, height: int):
+        area = width * height
+
+        # path_length is number of edges (path length - 1)
+        self.assertEqual(stats["path_length"], max(0, len(path) - 1),
+                         "stats['path_length'] should be len(path) - 1")
+
+        # expanded/frontier should be positive and bounded by area
+        self.assertGreater(stats["states_expanded"], 0, "states_expanded should be > 0")
+        self.assertGreater(stats["max_frontier_size"], 0, "max_frontier_size should be > 0")
+        self.assertLessEqual(stats["states_expanded"], area, "expanded should not exceed maze area")
+        self.assertLessEqual(stats["max_frontier_size"], area, "frontier should not exceed maze area")
+
+        # expanded should be at least the nodes along the path (rough sanity)
+        self.assertGreaterEqual(stats["states_expanded"], max(1, len(path) - 1))
+
 
     def test_bfs(self) -> None:
         single_cell_maze = Maze(1, 1)
         self._check_maze(bfs, single_cell_maze, 1)
+        # check that the start and goal are equal
+        self.assertEqual(single_cell_maze.start_state, single_cell_maze.goal_state)
+        path, stats = bfs(single_cell_maze)
+        self._assert_valid_path(single_cell_maze, path)
+        self.assertEqual(len(path), 1)
+        self.assertEqual(stats["path_length"], 0)
+        self._validate_stats(stats, path, 1, 1)
+
+
 
         two_by_two_maze = Maze(2, 2)
         self._check_maze(bfs, two_by_two_maze, 3)
 
         large_maze = Maze(10, 10)
         self._check_maze(bfs, large_maze)
-        # TODO: add tests here!
+        
+
 
     def test_dfs(self) -> None:
         single_cell_maze = Maze(1, 1)
