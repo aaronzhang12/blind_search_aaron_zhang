@@ -100,13 +100,34 @@ class IOTest(unittest.TestCase):
         single_cell_maze = Maze(1, 1)
         self._check_maze(dfs, single_cell_maze, 1)
 
+        # path and stats should be same/similar to bfs for simple maze
+        self.assertEqual(single_cell_maze.start_state, single_cell_maze.goal_state)
+        path, stats = dfs(single_cell_maze)
+        self._assert_valid_path(single_cell_maze, path)
+        self.assertEqual(len(path), 1)
+        self.assertEqual(stats["path_length"], 1)
+        self._validate_stats(stats, path, 1, 1)
+
         random.seed(0)
         two_by_two_maze = Maze(2, 2)
         self._check_maze(dfs, two_by_two_maze, 3)
 
+        # path and stats should be similar to bfs for 2x2 maze
+        path, stats = dfs(two_by_two_maze)
+        self._assert_valid_path(two_by_two_maze, path)
+        # path should be exactly 3
+        self.assertEqual(len(path), 3)
+        self._validate_stats(stats, path, 2, 2)
+
+        # path should be similar to bfs
         random.seed(0)
         large_maze = Maze(10, 10)
         self._check_maze(dfs, large_maze)
+        path, stats = dfs(large_maze)
+        self._assert_valid_path(large_maze, path)
+        # path should be at least 19
+        self.assertGreaterEqual(len(path), 19)
+        self._validate_stats(stats, path, 10, 10)
 
     def test_no_empty_path_when_reachable(self):
         # Build a 1x3 corridor: (0,0) -> (0,1) -> (0,2)
