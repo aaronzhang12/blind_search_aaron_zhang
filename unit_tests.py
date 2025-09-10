@@ -201,43 +201,60 @@ class IOTest(unittest.TestCase):
         self.assertLessEqual(len(bpath), len(dpath),
                             "BFS path (nodes) should be <= DFS path")
         
-    def test_bfs_picks_shortest_among_multiple_paths(self):
-        # Build 3x3 board
-        board = [[MazeRoom() for _ in range(3)] for _ in range(3)]
+    def test_bfs_shortest_on_5x5_with_many_solutions(self):
+        # Build a 5x5 board with an open 3x3 subgrid at top-left (rows 0..2, cols 0..2)
+        # Start = (0,0), Goal = (2,2). There are many shortest paths of 4 edges (5 nodes).
+        board = [[MazeRoom() for _ in range(5)] for _ in range(5)]
 
-        # Helper to open a bidirectional passage
         def link(r1, c1, r2, c2, dir1, dir2):
             setattr(board[r1][c1], dir1, 0)
             setattr(board[r2][c2], dir2, 0)
 
-        # Short path along top row: (0,0)-(0,1)-(0,2)
-        link(0,0, 0,1, 'east','west')
-        link(0,1, 0,2, 'east','west')
+        # Open all horizontal edges in the 3x3 subgrid
+        for r in range(0, 3):
+            for c in range(0, 2):
+                link(r, c, r, c+1, 'east', 'west')
 
-        # Longer detour around bottom/right:
-        # (0,0)->(1,0)->(2,0)->(2,1)->(2,2)->(1,2)->(0,2)
-        link(0,0, 1,0, 'south','north')
-        link(1,0, 2,0, 'south','north')
-        link(2,0, 2,1, 'east','west')
-        link(2,1, 2,2, 'east','west')
-        link(2,2, 1,2, 'north','south')
-        link(1,2, 0,2, 'north','south')
+        # Open all vertical edges in the 3x3 subgrid
+        for r in range(0, 2):
+            for c in range(0, 3):
+                link(r, c, r+1, c, 'south', 'north')
 
-        m = Maze(width=3, height=3, start=(0,0), goal=(0,2), self_generating=False, board=board)
+        # Everything outside that 3x3 remains closed (default walls), so no sneaky shortcuts.
+        m = Maze(width=5, height=5, start=(0,0), goal=(2,2), self_generating=False, board=board)
 
+        # Run BFS & DFS
         bpath, bstats = bfs(m)
-        self.assertIsNotNone(bpath, "BFS failed to find a path on a multi-solution board")
+        dpath, dstats = dfs(m)
 
-        # BFS should choose the *shortest* path (nodes convention)
-        self.assertEqual(len(bpath), 3, "BFS did not return the shortest path (nodes)")
-        self.assertEqual(bstats["path_length"], 3, "BFS path_length should equal number of nodes")
+        # Must find a path
+        self.assertIsNotNone(bpath, "BFS should find a path")
+        self.assertIsNotNone(dpath, "DFS should find a path")
 
-        # Sanity: steps are legal and within board
+        # --- BFS must return a SHORTEST path (nodes) ---
+        # Shortest nodes = 5 (edges=4). There are many shortest routes in the open 3x3 grid.
+        self.assertEqual(len(bpath), 5, "BFS did not return one of the shortest paths (nodes)")
+        self.assertEqual(bstats["path_length"], 5, "BFS path_length should equal number of nodes")
+
+        # Path legality (adjacency + no repeats) and in-bounds
         for u, v in zip(bpath, bpath[1:]):
-            self.assertIn(v, m.get_successors(u), f"Illegal step {u}->{v}")
+            self.assertIn(v, m.get_successors(u), f"BFS illegal step {u}->{v}")
+        self.assertEqual(len(bpath), len(set(bpath)), "BFS path revisits a state")
         for s in bpath:
             r, c = s.location
-            self.assertTrue(0 <= r < m.height and 0 <= c < m.width, f"Out-of-bounds state {s.location}")
+            self.assertTrue(0 <= r < m.height and 0 <= c < m.width, f"BFS out-of-bounds state {s.location}")
+
+        # DFS only needs to be valid; it may be longer than BFS
+        for u, v in zip(dpath, dpath[1:]):
+            self.assertIn(v, m.get_successors(u), f"DFS illegal step {u}->{v}")
+        self.assertEqual(len(dpath), len(set(dpath)), "DFS path revisits a state")
+        for s in dpath:
+            r, c = s.location
+            self.assertTrue(0 <= r < m.height and 0 <= c < m.width, f"DFS out-of-bounds state {s.location}")
+
+        # Optional: BFS no longer than DFS
+        self.assertLessEqual(len(bpath), len(dpath), "BFS path should be <= DFS path length")
+
 
     def test_path_never_out_of_bounds(self):
         random.seed(0)  # stabilize the generated maze
