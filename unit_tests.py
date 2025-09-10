@@ -52,7 +52,7 @@ class IOTest(unittest.TestCase):
         area = width * height
 
         # path_length is number of nodes (path length)
-        self.assertEqual(stats["path_length"], max(0, len(path)),
+        self.assertEqual(stats["path_length"], len(path),
                          "stats['path_length'] should be len(path)")
 
         # expanded/frontier should be positive and bounded by area
@@ -62,7 +62,7 @@ class IOTest(unittest.TestCase):
         self.assertLessEqual(stats["max_frontier_size"], area, "frontier should not exceed maze area")
 
         # expanded should be at least the nodes along the path (rough sanity)
-        self.assertGreaterEqual(stats["states_expanded"], max(1, len(path)))
+        self.assertGreaterEqual(stats["states_expanded"], len(path))
 
 
     def test_bfs(self) -> None:
