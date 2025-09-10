@@ -64,6 +64,9 @@ class IOTest(unittest.TestCase):
         # expanded should be at least the nodes along the path (rough sanity)
         self.assertGreaterEqual(stats["states_expanded"], len(path))
 
+        # path length should be less than the area of the grid
+        self.assertLessEqual(stats["path_length"], area)
+
 
     def test_bfs(self) -> None:
         random.seed(0)
@@ -237,7 +240,7 @@ class IOTest(unittest.TestCase):
             self.assertTrue(0 <= r < m.height and 0 <= c < m.width, f"Out-of-bounds state {s.location}")
 
     def test_path_never_out_of_bounds(self):
-        random.seed(1)  # stabilize the generated maze
+        random.seed(0)  # stabilize the generated maze
         m = Maze(10, 10)
 
         bpath, _ = bfs(m)
