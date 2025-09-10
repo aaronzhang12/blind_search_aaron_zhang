@@ -1,6 +1,6 @@
 import unittest
 from typing import Optional, Callable, Any, Tuple, List
-from maze import Maze
+from maze import Maze, MazeRoom
 from search import bfs, dfs
 
 class IOTest(unittest.TestCase):
@@ -95,6 +95,38 @@ class IOTest(unittest.TestCase):
         large_maze = Maze(10, 10)
         self._check_maze(dfs, large_maze)
         # TODO: add tests here!
+
+    def test_no_empty_path_when_reachable(self):
+        # Build a 1x3 corridor: (0,0) -> (0,1) -> (0,2)
+        board = [[MazeRoom() for _ in range(3)] for _ in range(1)]
+        # knock down east/west walls to open the corridor
+        # (0,0) <-> (0,1)
+        board[0][0].east = 0
+        board[0][1].west = 0
+        # (0,1) <-> (0,2)
+        board[0][1].east = 0
+        board[0][2].west = 0
+
+        m = Maze(width=3, height=1, start=(0,0), goal=(0,2), self_generating=False, board=board)
+
+        bpath, bstats = bfs(m)
+        dpath, dstats = dfs(m)
+
+        # Do NOT guard with "or []": this should be non-empty by correctness
+        self.assertIsNotNone(bpath, "BFS returned None on a reachable maze")
+        self.assertIsNotNone(dpath, "DFS returned None on a reachable maze")
+        self.assertGreater(len(bpath), 0, "BFS returned an empty path on a reachable maze")
+        self.assertGreater(len(dpath), 0, "DFS returned an empty path on a reachable maze")
+
+        # start and goal
+        self.assertEqual(bpath[0], m.get_start_state())
+        self.assertTrue(m.is_goal_state(bpath[-1]))
+        self.assertEqual(dpath[0], m.get_start_state())
+        self.assertTrue(m.is_goal_state(dpath[-1]))
+
+        # exact length: nodes=3, edges=2
+        self.assertEqual(len(bpath), 3)
+        self.assertEqual(bstats["path_length"], 2)
 
 if __name__ == "__main__":
     unittest.main()
