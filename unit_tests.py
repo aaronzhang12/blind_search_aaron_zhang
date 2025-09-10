@@ -85,14 +85,6 @@ class IOTest(unittest.TestCase):
         single_cell_maze = Maze(1, 1)
         self._check_maze(dfs, single_cell_maze, 1)
 
-        # same tests as bfs
-        self.assertEqual(single_cell_maze.start_state, single_cell_maze.goal_state)
-        path, stats = dfs(single_cell_maze)
-        self._assert_valid_path(single_cell_maze, path)
-        self.assertEqual(len(path), 1)
-        self.assertEqual(stats["path_length"], 0)
-        self._validate_stats(stats, path, 1, 1)
-
         two_by_two_maze = Maze(2, 2)
         self._check_maze(dfs, two_by_two_maze, 3)
 
