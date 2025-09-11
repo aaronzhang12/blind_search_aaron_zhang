@@ -36,16 +36,16 @@ class MazeGenerator(SearchProblem[MazeState]):
         self.width = width
         self.height = height
         
-        self.board = None
+        self.board = [[MazeRoom() for _ in range(width)] for _ in range(height)]
 
         start_x, start_y = random.randint(0, self.width-1), random.randint(0, self.height-1)
         
-        self.board[start_x][start_y] = True
+        self.board[start_x][start_y].visited = True
 
         # TODO: Set the initial start state and initialize the counters for the maze generation process
-        self.start_state = None 
+        self.start_state = MazeState(self.board, (start_x, start_y)) 
         self.visited_cells_count = 1  # Start with the initial cell visited
-        self.total_cells = None   # Total number of cells in the maze
+        self.total_cells = self.width * self.height   # Total number of cells in the maze
 
     # TODO: Fill out this method
     def get_start_state(self) -> MazeState:
@@ -58,7 +58,7 @@ class MazeGenerator(SearchProblem[MazeState]):
         Returns:
             MazeState: The initial state of the maze.
         """
-        pass
+        return self.start_state
 
     # TODO: Fill out this method
     def is_goal_state(self, state: MazeState) -> bool:
@@ -75,7 +75,7 @@ class MazeGenerator(SearchProblem[MazeState]):
             bool: True if all cells have been visited and the goal state is reached,
                 False otherwise.
         """
-        pass
+        return self.visited_cells_count == self.total_cells
 
     # TODO: Fill out this method (Hint: we provide two helper functions below that may be of use)
     def get_successors(self, state: MazeState) -> Set[MazeState]:
@@ -94,7 +94,41 @@ class MazeGenerator(SearchProblem[MazeState]):
         Returns:
             set[MazeState]: A set of successor MazeState objects.
         """
-        pass
+        res: Set[MazeState] = set()
+        row, col = state.location  # (row, col)
+
+        # Try each direction independently
+        for direction in ("north", "south", "east", "west"):
+            # Compute neighbor coordinates
+            nr, nc = row, col
+            if direction == "north":
+                nr -= 1
+            elif direction == "south":
+                nr += 1
+            elif direction == "east":
+                nc += 1
+            else:  # "west"
+                nc -= 1
+
+            # In-bounds?
+            if not self.is_in_range(nr, nc):
+                continue
+
+            # If neighbor not visited, carve passage in BOTH cells
+            if not self.board[nr][nc].visited:
+                # break current wall
+                setattr(self.board[row][col], direction, 0)
+                # break neighbor wall
+                opp = self.opposite_direction(direction)
+                setattr(self.board[nr][nc], opp, 0)
+                # mark visited & bump count
+                self.board[nr][nc].visited = True
+                self.visited_cells_count += 1
+
+                # FIX 3: successors are MazeState objects
+                res.add(MazeState(self.board, (nr, nc)))
+
+        return res
 
 # /////////////////////////////// Don't Edit Beyond this Line! /////////////////////////////////////
 

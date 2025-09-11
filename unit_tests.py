@@ -1,8 +1,9 @@
 import unittest
-from typing import Optional, Callable, Any, Tuple, List
+from typing import Optional, Callable, Any, Tuple, List, Set
 from maze import Maze, MazeRoom
 from search import bfs, dfs
 import random
+from directed_graph import DirectedGraph
 
 class IOTest(unittest.TestCase):
     """
@@ -264,9 +265,86 @@ class IOTest(unittest.TestCase):
             r, c = s.location
             self.assertTrue(0 <= r < m.height and 0 <= c < m.width,
                             f"DFS produced out-of-bounds state {s.location}")
+            
+    def _dg(self) -> DirectedGraph:
+        """
+        Build a 10x10 directed graph with:
+          - Short path: 0 -> 1 -> 3
+          - Long path:  0 -> 9 -> 8 -> 7 -> 6 -> 5 -> 4 -> 3
+        All other entries are None (no edge).
+        """
+        N = 10
+        none = None
+        # start with all None
+        M: List[List[Optional[float]]] = [[none for _ in range(N)] for _ in range(N)]
 
+        # short branch edges
+        M[0][1] = 1.0
+        M[1][3] = 1.0
 
+        # long branch edges
+        M[0][9] = 1.0
+        M[9][8] = 1.0
+        M[8][7] = 1.0
+        M[7][6] = 1.0
+        M[6][5] = 1.0
+        M[5][4] = 1.0
+        M[4][3] = 1.0
 
+        goals: Set[int] = {3}
+        return DirectedGraph(M, goal_indices=goals, start_state=0)
+
+    def _assert_path_in_bounds_and_legal(self, g: DirectedGraph, path):
+        self.assertIsNotNone(path, "Algorithm returned None on a reachable graph")
+        self.assertGreater(len(path), 0, "Algorithm returned empty path on a reachable graph")
+        # start and goal
+        self.assertEqual(path[0], g.get_start_state(), "Path must start at the start state")
+        self.assertTrue(g.is_goal_state(path[-1]), "Path must end at a goal state")
+
+        # in-bounds nodes and legal directed edges
+        n = len(g.matrix)
+        for u in path:
+            self.assertTrue(0 <= u < n, f"Out-of-bounds state {u}")
+        for u, v in zip(path, path[1:]):
+            self.assertIsNotNone(g.matrix[u][v], f"Illegal step {u}->{v} (no directed edge)")
+
+        # no revisits (simple path)
+        self.assertEqual(len(path), len(set(path)), "Path revisits a state")
+
+    def test_bfs_queue_vs_stack(self):
+        """
+        BFS must return the shortest path (nodes = 3: [0,1,3]).
+        If BFS mistakenly uses a stack (pop instead of popleft), it will likely follow
+        0->9->8->...->3 (8 nodes) and FAIL this test.
+        """
+        g = self._dg()
+        path, stats = bfs(g)
+
+        self._assert_path_in_bounds_and_legal(g, path)
+        self.assertEqual(len(path), 3, "BFS did not return the shortest (3-node) path")
+        # Your convention: path_length equals number of nodes
+        self.assertEqual(stats["path_length"], 3, "BFS stats['path_length'] must equal len(path)")
+
+    def test_dfs_stack_vs_queue(self):
+        """
+        On this graph, correct DFS (stack) will take the long detour (>= 8 nodes).
+        If DFS mistakenly uses a queue (popleft), it will tend to match BFS's 3-node path, and FAIL.
+        """
+        g = self._dg()
+        bpath, _ = bfs(g)
+        dpath, dstats = dfs(g)
+
+        self._assert_path_in_bounds_and_legal(g, dpath)
+
+        # DFS should NOT be shorter than BFS here (and usually will be strictly longer)
+        self.assertGreaterEqual(len(dpath), len(bpath),
+                                "DFS path unexpectedly shorter than BFS — DFS may be using a queue")
+        # In this specific graph with the given successor order, DFS should hit the long chain.
+        self.assertGreaterEqual(len(dpath), 8,
+                                "DFS should explore the long branch first on this graph (stack behavior)")
+
+        self.assertEqual(dstats["path_length"], len(dpath),
+                         "DFS stats['path_length'] must equal len(path)")
 
 if __name__ == "__main__":
     unittest.main()
