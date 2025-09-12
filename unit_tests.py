@@ -259,12 +259,6 @@ class IOTest(unittest.TestCase):
                             f"DFS produced out-of-bounds state {s.location}")
             
     def _dg(self) -> DirectedGraph:
-        """
-        Build a 10x10 directed graph with:
-          - Short path: 0 -> 1 -> 3
-          - Long path:  0 -> 9 -> 8 -> 7 -> 6 -> 5 -> 4 -> 3
-        All other entries are None (no edge).
-        """
         N = 10
         none = None
         # start with all None
@@ -304,11 +298,6 @@ class IOTest(unittest.TestCase):
         self.assertEqual(len(path), len(set(path)), "Path revisits a state")
 
     def test_bfs_queue_vs_stack(self):
-        """
-        BFS must return the shortest path (nodes = 3: [0,1,3]).
-        If BFS mistakenly uses a stack (pop instead of popleft), it will likely follow
-        0->9->8->...->3 (8 nodes) and FAIL this test.
-        """
         g = self._dg()
         path, stats = bfs(g)
 
@@ -318,10 +307,6 @@ class IOTest(unittest.TestCase):
         self.assertEqual(stats["path_length"], 3, "BFS stats['path_length'] must equal len(path)")
 
     def test_dfs_stack_vs_queue(self):
-        """
-        On this graph, correct DFS (stack) will take the long detour (>= 8 nodes).
-        If DFS mistakenly uses a queue (popleft), it will tend to match BFS's 3-node path, and FAIL.
-        """
         g = self._dg()
         bpath, _ = bfs(g)
         dpath, dstats = dfs(g)
