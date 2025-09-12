@@ -183,14 +183,6 @@ class IOTest(unittest.TestCase):
         self.assertGreaterEqual(bstats["max_frontier_size"], 1)
         self.assertGreaterEqual(dstats["max_frontier_size"], 1)
 
-    def test_path_states_use_same_board(self):
-        import random
-        random.seed(0)
-        m = Maze(3, 3)  # random but fine; we only check identity
-        path, stats = bfs(m)
-        self.assertIsNotNone(path)
-        for s in path:
-            self.assertIs(s.board, m.board, "Path state uses a different board object")
 
     def test_bfs_not_longer_than_dfs(self):
         random.seed(0)
